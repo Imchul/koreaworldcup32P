@@ -30,7 +30,17 @@ function SeedCell({
       </div>
     )
   }
-  // 라벨(조 1·2위 자리 또는 3위 미정)
+  // 확정된 조 1·2위 (실제 국가)
+  if (seed.kind === 'confirmed' && seed.confirmed) {
+    return (
+      <div className={`${base} font-medium text-slate-700`}>
+        <span>{flagEmoji(seed.confirmed.flagCode)}</span>
+        <span className="truncate">{seed.confirmed.nameKo}</span>
+        <span className="ml-auto text-[9px] text-slate-400">{seed.label.slice(-2)}</span>
+      </div>
+    )
+  }
+  // 라벨(미확정 조 1·2위 자리 또는 3위 미정)
   return (
     <div className={`${base} ${seed.isThird ? 'text-amber-600' : 'text-slate-400'}`}>
       {seed.isThird ? '❓' : ''} {seed.label}

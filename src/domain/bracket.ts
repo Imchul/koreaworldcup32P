@@ -1,16 +1,18 @@
 import type { Group, ThirdRow } from '../types/worldcup'
 import { KOREA_TEAM_ID } from '../data/initialTeams'
 import type { Seed, SeedMatch } from '../data/bracketSeeds'
+import { bracketConfirmed, type ConfirmedTeam } from '../data/bracketConfirmed'
 
 // 해소된 한 자리(슬롯)
 export interface ResolvedSeed {
-  kind: 'team' | 'label' // team = 실제 팀(3위), label = 조 1·2위 자리표시
+  kind: 'team' | 'confirmed' | 'label' // team=3위, confirmed=확정된 조1·2위, label=미확정 자리
   groupCode: Group
-  label: string // 'A1' | 'B2' | '미정' 등
-  teamId?: string // kind==='team'
+  label: string // 'A조 1위' 등
+  teamId?: string // kind==='team' (3위, teamsById 조회)
+  confirmed?: ConfirmedTeam // kind==='confirmed' (이름·국기 직접 포함)
   isThird: boolean
   isKorea: boolean
-  determined: boolean // 3위 슬롯이 실제 팀으로 채워졌는지
+  determined: boolean // 실제 팀으로 채워졌는지
 }
 
 export interface ResolvedMatch {
@@ -57,13 +59,15 @@ export function buildBracket(
       }
     }
     const suffix = seed.type === 'winner' ? '1위' : '2위'
+    const confirmed = bracketConfirmed[`${seed.type}-${seed.group}`]
     return {
-      kind: 'label',
+      kind: confirmed ? 'confirmed' : 'label',
       groupCode: seed.group,
       label: `${seed.group}조 ${suffix}`,
+      confirmed,
       isThird: false,
       isKorea: false,
-      determined: false,
+      determined: !!confirmed,
     }
   }
 

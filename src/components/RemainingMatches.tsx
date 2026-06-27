@@ -42,13 +42,31 @@ function Stepper({
   )
 }
 
+// 승/무/패 예상 확률 막대
+function ProbBar({ prob }: { prob: { home: number; draw: number; away: number } }) {
+  return (
+    <div>
+      <div className="flex h-1.5 overflow-hidden rounded-full">
+        <div className="bg-blue-400" style={{ width: `${prob.home}%` }} />
+        <div className="bg-slate-300" style={{ width: `${prob.draw}%` }} />
+        <div className="bg-rose-400" style={{ width: `${prob.away}%` }} />
+      </div>
+      <div className="mt-0.5 flex justify-between text-[10px] text-slate-400">
+        <span>홈승 {prob.home}%</span>
+        <span>무 {prob.draw}%</span>
+        <span>원정승 {prob.away}%</span>
+      </div>
+    </div>
+  )
+}
+
 export function RemainingMatches({ matches, teamsById, onScore, onReset, dirty }: Props) {
-  const decisive = matches.filter((m) => m.decisive)
+  const remaining = matches.filter((m) => m.prob) // 남은 6경기
 
   return (
     <section className="rounded-2xl bg-white p-4 shadow">
       <div className="mb-1 flex items-center justify-between">
-        <h2 className="text-base font-bold text-slate-800">결정적 남은 경기 · 시뮬레이터</h2>
+        <h2 className="text-base font-bold text-slate-800">남은 6경기 · 시뮬레이터</h2>
         {dirty && (
           <button
             type="button"
@@ -60,18 +78,27 @@ export function RemainingMatches({ matches, teamsById, onScore, onReset, dirty }
         )}
       </div>
       <p className="mb-3 text-xs text-slate-500">
-        점수를 바꾸면 위 순위와 한국 상태가 즉시 다시 계산됩니다. (새로고침하면 공식값 복귀)
+        점수를 바꾸면 순위·한국 상태·대진표가 즉시 다시 계산됩니다. ⭐=한국 운명을 가르는 결정적 경기.
+        막대는 예상 승률(참고 이미지 기준).
       </p>
 
       <div className="space-y-3">
-        {decisive.map((m) => {
+        {remaining.map((m) => {
           const home = teamsById[m.homeTeamId]
           const away = teamsById[m.awayTeamId]
           const entered = m.homeScore != null && m.awayScore != null
           return (
-            <div key={m.id} className="rounded-xl border border-slate-100 p-3">
+            <div
+              key={m.id}
+              className={`rounded-xl border p-3 ${
+                m.decisive ? 'border-korea/40 bg-blue-50/40' : 'border-slate-100'
+              }`}
+            >
               <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-500">{m.groupCode}조</span>
+                <span className="font-semibold text-slate-500">
+                  {m.decisive && <span className="mr-1">⭐</span>}
+                  {m.groupCode}조
+                </span>
                 <span className="flex items-center gap-2">
                   {m.kickoffAt && <span className="text-slate-400">{formatKST(m.kickoffAt)}</span>}
                   <span
@@ -84,17 +111,25 @@ export function RemainingMatches({ matches, teamsById, onScore, onReset, dirty }
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex-1 text-right text-sm font-medium text-slate-800">
-                  {home?.nameKo} <span className="ml-1">{flagEmoji(home?.flagCode ?? 'xx')}</span>
-                </div>
+              <div className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-800">
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  {flagEmoji(home?.flagCode ?? 'xx')} {home?.nameKo}
+                </span>
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  {away?.nameKo} {flagEmoji(away?.flagCode ?? 'xx')}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center justify-center gap-2">
                 <Stepper value={m.homeScore} onChange={(v) => onScore(m.id, v, m.awayScore ?? 0)} />
                 <span className="text-slate-300">:</span>
                 <Stepper value={m.awayScore} onChange={(v) => onScore(m.id, m.homeScore ?? 0, v)} />
-                <div className="flex-1 text-left text-sm font-medium text-slate-800">
-                  <span className="mr-1">{flagEmoji(away?.flagCode ?? 'xx')}</span> {away?.nameKo}
-                </div>
               </div>
+
+              {m.prob && (
+                <div className="mt-2">
+                  <ProbBar prob={m.prob} />
+                </div>
+              )}
             </div>
           )
         })}

@@ -36,22 +36,50 @@ export const matches: Match[] = [
   { id: 'L-GHA-PAN', groupCode: 'L', homeTeamId: 'GHA', awayTeamId: 'PAN', homeScore: 2, awayScore: 0, status: 'finished' },
   { id: 'L-CRO-PAN', groupCode: 'L', homeTeamId: 'CRO', awayTeamId: 'PAN', homeScore: 1, awayScore: 0, status: 'finished' },
 
-  // ═══════════════════ 결정적 3경기 (시뮬레이터 입력 대상) ═══════════════════
-  // 한국시간 6/28(일) 오전. 공식 결과가 나오면 점수 채우고 status='finished'.
+  // ═══════════════════ 남은 6경기 (시뮬레이터 입력 대상) ═══════════════════
+  // 한국시간 6/28(일) 오전. 각 조 2경기 동시 진행. decisive=한국 운명을 가르는 경기.
+  // prob: 참고 이미지(Football Meets Data)의 승/무/패 예상 확률(%).
+
+  // ── L조 (06:00) ──
   {
     id: 'L-CRO-GHA', groupCode: 'L', homeTeamId: 'CRO', awayTeamId: 'GHA',
     homeScore: null, awayScore: null, status: 'scheduled',
     kickoffAt: '2026-06-28T06:00:00+09:00', decisive: true,
+    prob: { home: 55, draw: 23, away: 22 },
   },
+  {
+    id: 'L-PAN-ENG', groupCode: 'L', homeTeamId: 'PAN', awayTeamId: 'ENG',
+    homeScore: null, awayScore: null, status: 'scheduled',
+    kickoffAt: '2026-06-28T06:00:00+09:00', decisive: false,
+    prob: { home: 2, draw: 7, away: 91 },
+  },
+
+  // ── K조 (08:30) ──
   {
     id: 'K-COD-UZB', groupCode: 'K', homeTeamId: 'COD', awayTeamId: 'UZB',
     homeScore: null, awayScore: null, status: 'scheduled',
     kickoffAt: '2026-06-28T08:30:00+09:00', decisive: true,
+    prob: { home: 46, draw: 25, away: 29 },
   },
+  {
+    id: 'K-COL-POR', groupCode: 'K', homeTeamId: 'COL', awayTeamId: 'POR',
+    homeScore: null, awayScore: null, status: 'scheduled',
+    kickoffAt: '2026-06-28T08:30:00+09:00', decisive: false,
+    prob: { home: 29, draw: 25, away: 46 },
+  },
+
+  // ── J조 (11:00) ──
   {
     id: 'J-ALG-AUT', groupCode: 'J', homeTeamId: 'ALG', awayTeamId: 'AUT',
     homeScore: null, awayScore: null, status: 'scheduled',
     kickoffAt: '2026-06-28T11:00:00+09:00', decisive: true,
+    prob: { home: 24, draw: 43, away: 33 },
+  },
+  {
+    id: 'J-JOR-ARG', groupCode: 'J', homeTeamId: 'JOR', awayTeamId: 'ARG',
+    homeScore: null, awayScore: null, status: 'scheduled',
+    kickoffAt: '2026-06-28T11:00:00+09:00', decisive: false,
+    prob: { home: 1, draw: 4, away: 96 },
   },
 ]
 

@@ -38,6 +38,26 @@ export const GROUP_SCENARIOS: GroupScenario[] = [
   },
 ]
 
+// 각 조에서 "한국에 좋은 결과(한국보다 좋은 3위가 안 나옴)"가 나올 확률(%).
+// 참고 이미지의 승/무/패 확률 + 분석의 결과 매핑으로 도출(근사):
+//   L: 가나 승(22%)만 좋음 → good 22 / bad 78
+//   K: DR콩고 무·패(무25 + 우즈벡승29)면 좋음 → good 54 / bad 46  (우즈벡 6골차 이변 무시)
+//   J: 오스트리아 승(33%) + 알제리 2골차+ 승(약 12%) → good 45 / bad 55
+export interface GroupProb {
+  group: 'L' | 'K' | 'J'
+  goodPct: number
+  badPct: number
+  note: string
+}
+
+export const GROUP_PROBS: GroupProb[] = [
+  { group: 'L', goodPct: 22, badPct: 78, note: '가나 승(22%)만 한국에 유리' },
+  { group: 'K', goodPct: 54, badPct: 46, note: 'DR콩고가 이기지 않으면 유리(54%)' },
+  { group: 'J', goodPct: 45, badPct: 55, note: '오스트리아 승 또는 알제리 2골차+ 승(약 45%)' },
+]
+
+const goodPctOf = (g: 'L' | 'K' | 'J') => GROUP_PROBS.find((p) => p.group === g)!.goodPct / 100
+
 export interface ComboRow {
   L: 'good' | 'bad'
   K: 'good' | 'bad'
@@ -45,9 +65,10 @@ export interface ComboRow {
   badCount: number
   koreaRank: number
   qualified: boolean
+  probPct: number // 이 조합이 나올 확률(%)
 }
 
-// 8가지 조합 (각 조 good/bad)
+// 8가지 조합 (각 조 good/bad) + 발생 확률
 export function buildComboTable(): ComboRow[] {
   const states: Array<'good' | 'bad'> = ['good', 'bad']
   const rows: ComboRow[] = []
@@ -55,6 +76,10 @@ export function buildComboTable(): ComboRow[] {
     for (const K of states)
       for (const J of states) {
         const badCount = [L, K, J].filter((s) => s === 'bad').length
+        const p =
+          (L === 'good' ? goodPctOf('L') : 1 - goodPctOf('L')) *
+          (K === 'good' ? goodPctOf('K') : 1 - goodPctOf('K')) *
+          (J === 'good' ? goodPctOf('J') : 1 - goodPctOf('J'))
         rows.push({
           L,
           K,
@@ -62,10 +87,28 @@ export function buildComboTable(): ComboRow[] {
           badCount,
           koreaRank: 7 + badCount,
           qualified: badCount <= 1,
+          probPct: Math.round(p * 1000) / 10,
         })
       }
-  // 진출 가능한 조합 먼저, 그 안에서 badCount 적은 순
-  return rows.sort((a, b) => a.badCount - b.badCount)
+  // 진출 가능한 조합 먼저, 그 안에서 발생 확률 높은 순
+  return rows.sort((a, b) => a.badCount - b.badCount || b.probPct - a.probPct)
+}
+
+// 한국 진출(8위 이내) 종합 확률 = P(나쁜 조 ≤ 1)
+export function computeQualifyProbability(): {
+  p0: number // 0 bad
+  p1: number // 1 bad
+  pOut: number // 2+ bad (탈락)
+  qualify: number
+} {
+  const combos = buildComboTable()
+  const sum = (n: number) =>
+    combos.filter((c) => c.badCount === n).reduce((a, c) => a + c.probPct, 0)
+  const p0 = Math.round(sum(0) * 10) / 10
+  const p1 = Math.round(sum(1) * 10) / 10
+  const qualify = Math.round((p0 + p1) * 10) / 10
+  const pOut = Math.round((100 - qualify) * 10) / 10
+  return { p0, p1, pOut, qualify }
 }
 
 export const QUALIFICATION_RULE =

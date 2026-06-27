@@ -15,6 +15,13 @@ export interface Team {
   conductScore?: number // 페어플레이 점수 (낮을수록 좋음). MVP에서는 optional fallback
 }
 
+// 승/무/패 예상 확률 (%, 합 100). 참고 이미지(Football Meets Data) 기준 입력값.
+export interface MatchProb {
+  home: number
+  draw: number
+  away: number
+}
+
 export interface Match {
   id: string
   groupCode: Group
@@ -24,7 +31,8 @@ export interface Match {
   awayScore: number | null
   status: 'scheduled' | 'finished'
   kickoffAt?: string // ISO 8601 (한국시간 표기는 화면에서 변환)
-  decisive?: boolean // 한국 운명을 가르는 결정적 경기 여부 (시뮬레이터 입력 대상)
+  decisive?: boolean // 한국 운명을 가르는 결정적 경기 여부
+  prob?: MatchProb // 남은 경기 예상 승률
 }
 
 export interface StandingRow {

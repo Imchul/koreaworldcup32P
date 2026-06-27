@@ -16,6 +16,18 @@
   | 6/28 11:00 | J | 알제리 vs 오스트리아 | **오스트리아 승** 또는 알제리 2골차↑ 승 |
 - 한국보다 좋은 3위를 만든 위험 조가 **0~1개면 진출(7~8위), 2개 이상이면 탈락(9위↓)**.
 
+## 주요 기능
+
+- **남은 6경기 시뮬레이터**: 모든 잔여 경기 스코어 직접 입력. 결정적 경기(⭐) + 예상 승률 막대(참고 이미지).
+- **예상 스코어 시나리오 1~5 버튼**: 가장 유력/생존/아슬아슬/최상/한 끗 차 탈락 등 — 클릭 시 6경기 스코어가
+  적용되어 한국 가능성·대진표가 즉시 갱신.
+- **진출 확률 · 경우의 수 표**(팝업): 승률 기반 종합 진출 확률 + J/K/L 8가지 조합별 확률·순위·진출여부.
+- **와일드카드 순위표**: 경기수 + 확정/미확정(J·K·L) 구분.
+- **32강 대진표**: 와일드카드 결과로 한국 위치 표시, 확정된 조 1·2위 국가([`bracketConfirmed.ts`](src/data/bracketConfirmed.ts)) 반영.
+
+> 승률 수치는 참고 이미지(Football Meets Data)의 승/무/패 확률을 입력값으로 쓰며, 데이터는 스크래핑하지
+> 않습니다. 확정 국가는 최종 순위가 나오는 대로 `bracketConfirmed.ts`에 추가하세요.
+
 ## 아키텍처
 
 순수 정적 사이트(백엔드/DB 없음). 모든 계산은 브라우저의 pure function에서 수행합니다.
@@ -28,18 +40,20 @@ src/
     matches.ts             J/K/L 경기 + 결정적 3경기   ← 공식 결과 갱신 지점
     fixedThirds.ts         확정된 9개 조 3위 행
     bracketSeeds.ts        32강 대진 구조(조 1·2위 자리 + 3위 슬롯, 예시)
+    bracketConfirmed.ts    확정된 조 1·2위 국가(예: A조 1위 멕시코) ← 확정 시 채움
+    scenarioPresets.ts     예상 스코어 시나리오 1~5 (6경기 스코어셋)
   domain/                  pure function (테스트 대상)
     standings.ts           computeGroupStandings / updateMatchScore
     bestThirds.ts          getThirdPlacedTeams(확정여부 포함) / rankBestThirds
     koreaStatus.ts         getKoreaStatus (진출/탈락 판정)
-    bracket.ts             buildBracket (3위→대진 슬롯 배정)
-    scenarios.ts           진출 시나리오 리포트(8조합 표)
+    bracket.ts             buildBracket (3위→대진 슬롯 배정, 확정국가 반영)
+    scenarios.ts           진출 규칙·8조합 표·진출 확률(승률 기반)
     compute.ts             전체 상태 조합
   components/              UI (계산 로직 없음)
-    KoreaStatusCard / BestThirdTable(경기수·확정구분) / RemainingMatches(시뮬레이터)
-    BracketTree(대진표) / ScenarioModal(진출 시나리오)
+    KoreaStatusCard / BestThirdTable(경기수·확정구분) / RemainingMatches(6경기·승률바)
+    ScenarioPresets(시나리오 버튼) / BracketTree(대진표) / ScenarioModal(확률·경우의 수)
   App.tsx                  data → domain → UI
-tests/                     Vitest (분석 시나리오 검증)
+tests/                     Vitest (분석 시나리오 검증, 32 tests)
 ```
 
 ## 결과 갱신 방법 (어드민)

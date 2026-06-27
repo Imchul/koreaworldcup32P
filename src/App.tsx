@@ -3,6 +3,7 @@ import type { Match } from './types/worldcup'
 import { teams, teamsById } from './data/initialTeams'
 import { matches as officialMatches, lastUpdated } from './data/matches'
 import { fixedThirds } from './data/fixedThirds'
+import { scenarioPresets } from './data/scenarioPresets'
 import { computeWorldCupState } from './domain/compute'
 import { updateMatchScore } from './domain/standings'
 import { KoreaStatusCard } from './components/KoreaStatusCard'
@@ -10,12 +11,21 @@ import { BestThirdTable } from './components/BestThirdTable'
 import { RemainingMatches } from './components/RemainingMatches'
 import { BracketTree } from './components/BracketTree'
 import { ScenarioModal } from './components/ScenarioModal'
+import { ScenarioPresets, type PresetResult } from './components/ScenarioPresets'
 import { formatKST } from './lib/flag'
 
+// 예상 스코어를 공식 경기에 적용한 matches 생성
+function applyScores(scores: Record<string, [number, number]>): Match[] {
+  let ms = officialMatches
+  for (const [id, [h, a]] of Object.entries(scores)) ms = updateMatchScore(ms, id, h, a)
+  return ms
+}
+
 export default function App() {
-  // 기본값 = 코드의 공식 경기 결과. 시뮬레이터로 바꾸면 이 state만 갱신.
+  // 기본값 = 코드의 공식 경기 결과. 시뮬레이터/시나리오로 바꾸면 이 state만 갱신.
   const [matches, setMatches] = useState<Match[]>(officialMatches)
   const [scenarioOpen, setScenarioOpen] = useState(false)
+  const [activePreset, setActivePreset] = useState<string | null>(null)
   const dirty = matches !== officialMatches
 
   const state = useMemo(
@@ -23,10 +33,40 @@ export default function App() {
     [matches],
   )
 
-  const handleScore = (id: string, home: number | null, away: number | null) =>
-    setMatches((ms) => updateMatchScore(ms, id, home, away))
+  // 시나리오 버튼별 한국 결과 미리 계산 (현재 시뮬레이션과 무관, 1회 계산)
+  const presetResults = useMemo<PresetResult[]>(
+    () =>
+      scenarioPresets.map((p) => {
+        const s = computeWorldCupState(applyScores(p.scores), teams, fixedThirds).koreaStatus
+        return {
+          id: p.id,
+          name: p.name,
+          desc: p.desc,
+          probPct: p.probPct,
+          label: s.label,
+          koreaRank: s.koreaRank,
+          qualified: s.qualified,
+        }
+      }),
+    [],
+  )
 
-  const handleReset = () => setMatches(officialMatches)
+  const handleScore = (id: string, home: number | null, away: number | null) => {
+    setMatches((ms) => updateMatchScore(ms, id, home, away))
+    setActivePreset(null) // 수동 수정 시 시나리오 선택 해제
+  }
+
+  const handleReset = () => {
+    setMatches(officialMatches)
+    setActivePreset(null)
+  }
+
+  const handleSelectPreset = (id: string) => {
+    const p = scenarioPresets.find((x) => x.id === id)
+    if (!p) return
+    setMatches(applyScores(p.scores))
+    setActivePreset(id)
+  }
 
   return (
     <div className="mx-auto min-h-screen max-w-screen-sm px-3 pb-12 pt-4">
@@ -46,11 +86,17 @@ export default function App() {
         onClick={() => setScenarioOpen(true)}
         className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow active:bg-slate-700"
       >
-        📋 한국 진출 시나리오 보기 (어떻게 되면 올라가나?)
+        📊 한국 진출 확률 · 경우의 수 표 보기
       </button>
 
       <main className="space-y-4">
         <KoreaStatusCard status={state.koreaStatus} />
+        <ScenarioPresets
+          results={presetResults}
+          activeId={activePreset}
+          onSelect={handleSelectPreset}
+          onClear={handleReset}
+        />
         <RemainingMatches
           matches={matches}
           teamsById={teamsById}

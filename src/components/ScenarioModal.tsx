@@ -1,12 +1,15 @@
 import {
   GROUP_SCENARIOS,
+  GROUP_PROBS,
   QUALIFICATION_RULE,
   buildComboTable,
+  computeQualifyProbability,
 } from '../domain/scenarios'
 
 export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null
   const combos = buildComboTable()
+  const odds = computeQualifyProbability()
 
   return (
     <div
@@ -33,6 +36,36 @@ export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () =>
 
         <div className="rounded-xl bg-blue-50 p-3 text-sm text-slate-700">
           <b className="text-korea">진출 규칙</b> · {QUALIFICATION_RULE}
+        </div>
+
+        {/* 진출 확률 요약 */}
+        <div className="mt-3 rounded-xl border border-slate-100 p-3">
+          <div className="flex items-end justify-between">
+            <span className="text-sm font-bold text-slate-800">예상 진출 확률</span>
+            <span className="text-2xl font-extrabold text-korea">{odds.qualify}%</span>
+          </div>
+          <div className="mt-2 flex h-2.5 overflow-hidden rounded-full">
+            <div className="bg-emerald-500" style={{ width: `${odds.p0}%` }} title="7위" />
+            <div className="bg-emerald-300" style={{ width: `${odds.p1}%` }} title="8위" />
+            <div className="bg-rose-400" style={{ width: `${odds.pOut}%` }} title="탈락" />
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-500">
+            <span>7위 진출 {odds.p0}%</span>
+            <span>8위 진출 {odds.p1}%</span>
+            <span className="text-rose-500">탈락(9위↓) {odds.pOut}%</span>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-1.5 text-[11px]">
+            {GROUP_PROBS.map((g) => (
+              <div key={g.group} className="rounded-lg bg-slate-50 px-2 py-1.5 text-center">
+                <div className="font-bold text-slate-700">{g.group}조</div>
+                <div className="text-emerald-600">유리 {g.goodPct}%</div>
+                <div className="text-rose-500">불리 {g.badPct}%</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[10px] text-slate-400">
+            참고 이미지 승률 + 분석 매핑 기반 근사치. 정확한 확률은 스코어 분포에 따라 달라집니다.
+          </p>
         </div>
 
         <h3 className="mt-4 mb-2 text-sm font-bold text-slate-800">조별 핵심 변수</h3>
@@ -62,15 +95,16 @@ export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         <h3 className="mt-4 mb-2 text-sm font-bold text-slate-800">8가지 조합별 결과</h3>
-        <div className="overflow-hidden rounded-lg border border-slate-100">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-100">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="whitespace-nowrap bg-slate-50 text-xs text-slate-500">
-                <th className="px-2 py-2 font-medium">L조</th>
-                <th className="px-2 py-2 font-medium">K조</th>
-                <th className="px-2 py-2 font-medium">J조</th>
-                <th className="px-1 py-2 font-medium">예상순위</th>
-                <th className="px-2 py-2 font-medium">결과</th>
+              <tr className="whitespace-nowrap bg-slate-50 text-[11px] text-slate-500">
+                <th className="px-1 py-2 font-medium">L조</th>
+                <th className="px-1 py-2 font-medium">K조</th>
+                <th className="px-1 py-2 font-medium">J조</th>
+                <th className="px-1 py-2 font-medium">확률</th>
+                <th className="px-1 py-2 font-medium">순위</th>
+                <th className="px-1 py-2 font-medium">결과</th>
               </tr>
             </thead>
             <tbody>
@@ -84,8 +118,9 @@ export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () =>
                   <Cell s={c.L} />
                   <Cell s={c.K} />
                   <Cell s={c.J} />
-                  <td className="px-2 py-2 font-semibold text-slate-700">{c.koreaRank}위</td>
-                  <td className="px-2 py-2">
+                  <td className="px-1 py-2 text-slate-500">{c.probPct}%</td>
+                  <td className="px-1 py-2 font-semibold text-slate-700">{c.koreaRank}위</td>
+                  <td className="whitespace-nowrap px-1 py-2">
                     {c.qualified ? (
                       <span className="font-bold text-emerald-600">진출 ✓</span>
                     ) : (
