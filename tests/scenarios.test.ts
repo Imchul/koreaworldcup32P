@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { buildComboTable, computeQualifyProbability } from '../src/domain/scenarios'
+import {
+  buildComboTable,
+  computeQualifyProbability,
+  resolvedFromWatch,
+} from '../src/domain/scenarios'
 import { computeWorldCupState } from '../src/domain/compute'
 import { updateMatchScore } from '../src/domain/standings'
 import { teams } from '../src/data/initialTeams'
@@ -32,6 +36,30 @@ describe('buildComboTable (진출 시나리오)', () => {
   })
 })
 
+describe('buildComboTable — 확정 조 반영(resolved)', () => {
+  it('현재 공식값에서 L조는 bad로 확정된다', () => {
+    const { koreaStatus } = computeWorldCupState(matches, teams, fixedThirds)
+    const resolved = resolvedFromWatch(koreaStatus.watchGroups)
+    expect(resolved.L).toBe('bad')
+    expect(resolved.K).toBeUndefined() // 미정
+    expect(resolved.J).toBeUndefined()
+  })
+
+  it('L조 bad 고정 시 남은 K·J만 변수 → 4조합, 모두 L=bad', () => {
+    const combos = buildComboTable({ L: 'bad' })
+    expect(combos).toHaveLength(4)
+    expect(combos.every((c) => c.L === 'bad')).toBe(true)
+    expect(Math.round(combos.reduce((a, c) => a + c.probPct, 0))).toBe(100)
+  })
+
+  it('L조 bad면 7위(badCount 0) 조합은 사라지고 8위가 최선', () => {
+    const odds = computeQualifyProbability({ L: 'bad' })
+    expect(odds.p0).toBe(0) // 7위 불가
+    expect(odds.qualify).toBeCloseTo(odds.p1, 1) // 진출 = 8위뿐
+    expect(Math.round(odds.qualify + odds.pOut)).toBe(100)
+  })
+})
+
 describe('computeQualifyProbability', () => {
   it('진출 = p0 + p1, 합 100%', () => {
     const o = computeQualifyProbability()
@@ -53,36 +81,33 @@ describe('scenarioPresets — 버튼별 한국 결과', () => {
     return computeWorldCupState(apply(p.scores), teams, fixedThirds).koreaStatus
   }
 
-  it('S1 가장 유력 → 탈락(10위)', () => {
+  it('S1 유일한 진출 경로(K·J 모두 유리) → 진출(8위)', () => {
     const s = outcome('S1')
-    expect(s.qualified).toBe(false)
-    expect(s.koreaRank).toBe(10)
-  })
-  it('S2 한국 생존 → 진출(7위)', () => {
-    const s = outcome('S2')
-    expect(s.qualified).toBe(true)
-    expect(s.koreaRank).toBe(7)
-  })
-  it('S3 아슬아슬 진출 → 진출(8위)', () => {
-    const s = outcome('S3')
     expect(s.qualified).toBe(true)
     expect(s.koreaRank).toBe(8)
   })
-  it('S4 최상 → 진출(7위)', () => {
-    expect(outcome('S4').koreaRank).toBe(7)
-  })
-  it('S5 한 끗 차 탈락 → 탈락(9위)', () => {
-    const s = outcome('S5')
+  it('S2 J조에서 무너짐 → 탈락(9위)', () => {
+    const s = outcome('S2')
     expect(s.qualified).toBe(false)
     expect(s.koreaRank).toBe(9)
+  })
+  it('S3 K조에서 무너짐 → 탈락(9위)', () => {
+    const s = outcome('S3')
+    expect(s.qualified).toBe(false)
+    expect(s.koreaRank).toBe(9)
+  })
+  it('S4 최악(K·J 모두 불리) → 탈락(10위)', () => {
+    const s = outcome('S4')
+    expect(s.qualified).toBe(false)
+    expect(s.koreaRank).toBe(10)
   })
 })
 
 describe('confirmed 플래그 (와일드카드 표 확정/미확정)', () => {
-  it('초기에는 J/K/L 3팀만 미확정', () => {
+  it('현재 K/J 2팀만 미확정 (L조 종료)', () => {
     const { rankedThirds } = computeWorldCupState(matches, teams, fixedThirds)
-    expect(rankedThirds.filter((r) => !r.confirmed)).toHaveLength(3)
-    expect(rankedThirds.filter((r) => r.confirmed)).toHaveLength(9)
+    expect(rankedThirds.filter((r) => !r.confirmed)).toHaveLength(2)
+    expect(rankedThirds.filter((r) => r.confirmed)).toHaveLength(10)
   })
 
   it('결정적 경기 입력 시 해당 조 3위가 확정됨', () => {

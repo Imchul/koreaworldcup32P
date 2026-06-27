@@ -11,9 +11,9 @@ import type { Match } from '../types/worldcup'
 //    (시뮬레이터 변경은 새로고침하면 이 공식값으로 복귀)
 //
 //  이미 끝난 경기의 스코어는 각 조 현재 순위(분석 기준)를 정확히 재현하도록 구성:
-//    J: ARG 6 / AUT 3·GD0 / ALG 3·GD-2 / JOR 0
-//    K: COL 6 / POR 4 / COD 1·GD-1 / UZB 0·GD-7
-//    L: ENG 4 / GHA 4 / CRO 3·GD-1 / PAN 0
+//    J: ARG 6 / AUT 3·GD0 / ALG 3·GD-2 / JOR 0   (결정적 J-ALG-AUT 대기)
+//    K: COL 6 / POR 4 / COD 1·GD-1 / UZB 0·GD-7   (결정적 K-COD-UZB 대기)
+//    L: ENG 7 / CRO 6 / GHA 4·GD+1(3위) / PAN 0   ← 조 종료. 3위 가나=한국에 불리(확정)
 //    (한국 = A조 3위, 3점·GD-1·득점2)
 // ============================================================================
 
@@ -40,16 +40,16 @@ export const matches: Match[] = [
   // 한국시간 6/28(일) 오전. 각 조 2경기 동시 진행. decisive=한국 운명을 가르는 경기.
   // prob: 참고 이미지(Football Meets Data)의 승/무/패 예상 확률(%).
 
-  // ── L조 (06:00) ──
+  // ── L조 (06:00) · 종료 ── 크로아티아 2-1 가나 → L조 3위=가나(4점)로 한국보다 위 → 한국에 불리(확정)
   {
     id: 'L-CRO-GHA', groupCode: 'L', homeTeamId: 'CRO', awayTeamId: 'GHA',
-    homeScore: null, awayScore: null, status: 'scheduled',
+    homeScore: 2, awayScore: 1, status: 'finished',
     kickoffAt: '2026-06-28T06:00:00+09:00', decisive: true,
     prob: { home: 55, draw: 23, away: 22 },
   },
   {
     id: 'L-PAN-ENG', groupCode: 'L', homeTeamId: 'PAN', awayTeamId: 'ENG',
-    homeScore: null, awayScore: null, status: 'scheduled',
+    homeScore: 0, awayScore: 2, status: 'finished',
     kickoffAt: '2026-06-28T06:00:00+09:00', decisive: false,
     prob: { home: 2, draw: 7, away: 91 },
   },
@@ -84,4 +84,4 @@ export const matches: Match[] = [
 ]
 
 // 마지막 공식 갱신 시각 (결과 입력 시 함께 수정)
-export const lastUpdated = '2026-06-27T23:00:00+09:00'
+export const lastUpdated = '2026-06-28T06:50:00+09:00'

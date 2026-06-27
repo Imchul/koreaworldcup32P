@@ -22,12 +22,12 @@ function status(ms: Match[]) {
 }
 
 describe('getKoreaStatus — 분석 시나리오', () => {
-  it('초기(모두 미정): 진출권이지만 아직 불확실', () => {
+  it('현재 공식값(L 종료·K/J 미정): 한국 8위 진출권이나 탈락 위험', () => {
     const s = status(matches)
-    expect(s.badCount).toBe(0)
+    expect(s.badCount).toBe(1) // L조 가나가 한국보다 좋은 3위
     expect(s.qualified).toBe(true)
-    expect(s.koreaRank).toBeLessThanOrEqual(8)
-    expect(s.label).toBe('아직 불확실')
+    expect(s.koreaRank).toBe(8)
+    expect(s.label).toBe('탈락 위험')
   })
 
   it('최상 시나리오(가나 승·DRC 무·오스트리아 승) → bad 0 → 진출 확정 7위', () => {
