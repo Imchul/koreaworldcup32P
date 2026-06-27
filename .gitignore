@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+coverage
+
+# 개인 로컬 설정 (공유 안 함)
+.claude/settings.local.json
