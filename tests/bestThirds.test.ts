@@ -7,7 +7,7 @@ import { fixedThirds } from '../src/data/fixedThirds'
 
 function rankNow(ms = matches) {
   const st = computeGroupStandings(ms, teams)
-  const thirds = getThirdPlacedTeams(st, fixedThirds)
+  const thirds = getThirdPlacedTeams(st, fixedThirds, ms)
   return rankBestThirds(thirds, teamsById)
 }
 

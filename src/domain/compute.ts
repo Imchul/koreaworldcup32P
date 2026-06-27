@@ -4,7 +4,7 @@ import { getThirdPlacedTeams, rankBestThirds } from './bestThirds'
 import { getKoreaStatus } from './koreaStatus'
 import { buildBracket, type Bracket } from './bracket'
 import type { FixedThird } from '../data/fixedThirds'
-import { annexCCombos, thirdSlots } from '../data/annexC'
+import { r32Seeds } from '../data/bracketSeeds'
 
 export interface WorldCupState {
   groupStandings: Record<Group, StandingRow[]>
@@ -24,9 +24,9 @@ export function computeWorldCupState(
 ): WorldCupState {
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]))
   const groupStandings = computeGroupStandings(matches, teams)
-  const thirds = getThirdPlacedTeams(groupStandings, fixedThirds)
+  const thirds = getThirdPlacedTeams(groupStandings, fixedThirds, matches)
   const rankedThirds = rankBestThirds(thirds, teamsById)
   const koreaStatus = getKoreaStatus(rankedThirds, groupStandings, matches, teamsById)
-  const bracket = buildBracket(rankedThirds, annexCCombos, thirdSlots)
+  const bracket = buildBracket(rankedThirds, r32Seeds)
   return { groupStandings, rankedThirds, koreaStatus, bracket }
 }

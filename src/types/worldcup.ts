@@ -44,6 +44,7 @@ export interface ThirdRow extends StandingRow {
   groupCode: Group
   rank: number // 1..12
   aboveCutline: boolean // 상위 8위 이내 = 진출권
+  confirmed: boolean // 해당 조 3위가 확정되었는지 (J/K/L은 결정적 경기 전까지 미확정)
 }
 
 export type KoreaStatusLabel =

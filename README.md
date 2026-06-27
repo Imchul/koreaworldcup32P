@@ -27,14 +27,17 @@ src/
     initialTeams.ts        팀·국기
     matches.ts             J/K/L 경기 + 결정적 3경기   ← 공식 결과 갱신 지점
     fixedThirds.ts         확정된 9개 조 3위 행
-    annexC.ts              32강 배정 표(구조 + 샘플)
+    bracketSeeds.ts        32강 대진 구조(조 1·2위 자리 + 3위 슬롯, 예시)
   domain/                  pure function (테스트 대상)
     standings.ts           computeGroupStandings / updateMatchScore
-    bestThirds.ts          getThirdPlacedTeams / rankBestThirds
+    bestThirds.ts          getThirdPlacedTeams(확정여부 포함) / rankBestThirds
     koreaStatus.ts         getKoreaStatus (진출/탈락 판정)
-    bracket.ts             buildBracket
+    bracket.ts             buildBracket (3위→대진 슬롯 배정)
+    scenarios.ts           진출 시나리오 리포트(8조합 표)
     compute.ts             전체 상태 조합
   components/              UI (계산 로직 없음)
+    KoreaStatusCard / BestThirdTable(경기수·확정구분) / RemainingMatches(시뮬레이터)
+    BracketTree(대진표) / ScenarioModal(진출 시나리오)
   App.tsx                  data → domain → UI
 tests/                     Vitest (분석 시나리오 검증)
 ```
@@ -78,9 +81,10 @@ npm run build   # 타입체크 + 정적 빌드 → dist/
 - **conduct score / FIFA 랭킹**: optional fallback 자리만 마련(현재 값 미입력).
 - **확정 3위 9팀 스탯**([`fixedThirds.ts`](src/data/fixedThirds.ts))은 분석 기반 best-effort 값.
   배포 전 공식 순위표와 대조할 것. (상대 순서만 맞으면 한국 판정은 정확)
-- **32강 대진표**: 구조와 lookup은 완성했으나 Annexe C 495행 공식 배정표는 미입력 →
-  현재는 와일드카드 순위순 **근사 배정**으로 표시됩니다. 공식 표를 [`annexC.ts`](src/data/annexC.ts)의
-  `annexCCombos`에 채우면 정확 배정으로 전환됩니다.
+- **32강 대진표**: 대진 **구조는 예시(illustrative)**. 조 1·2위 자리는 그룹 라벨로 표시하고,
+  3위 슬롯은 와일드카드 순위 순으로 채워집니다([`bracketSeeds.ts`](src/data/bracketSeeds.ts)).
+  한국은 자신의 와일드카드 순위에 해당하는 슬롯에 표시되며, 시뮬레이션으로 순위가 바뀌면 위치도
+  바뀝니다. 정확한 Annexe C 495행 배정표를 확보하면 `bracketSeeds`의 slotIndex↔조 매핑을 교체.
 
 ## 향후 확장
 

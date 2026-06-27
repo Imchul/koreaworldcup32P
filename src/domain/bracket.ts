@@ -1,62 +1,86 @@
 import type { Group, ThirdRow } from '../types/worldcup'
-import { combinationKey } from '../data/annexC'
-import type { ThirdSlot } from '../data/annexC'
 import { KOREA_TEAM_ID } from '../data/initialTeams'
+import type { Seed, SeedMatch } from '../data/bracketSeeds'
 
-export interface BracketSlot {
-  matchId: string
-  opponentLabel: string
-  third: ThirdRow | null // 배정된 3위 팀 (없으면 null)
+// 해소된 한 자리(슬롯)
+export interface ResolvedSeed {
+  kind: 'team' | 'label' // team = 실제 팀(3위), label = 조 1·2위 자리표시
+  groupCode: Group
+  label: string // 'A1' | 'B2' | '미정' 등
+  teamId?: string // kind==='team'
+  isThird: boolean
   isKorea: boolean
+  determined: boolean // 3위 슬롯이 실제 팀으로 채워졌는지
+}
+
+export interface ResolvedMatch {
+  id: string
+  side: 'L' | 'R'
+  top: ResolvedSeed
+  bottom: ResolvedSeed
 }
 
 export interface Bracket {
-  slots: BracketSlot[]
-  exact: boolean // true=Annexe C 공식 배정, false=폴백(순위순) 배정
+  left: ResolvedMatch[]
+  right: ResolvedMatch[]
+  koreaMatchId: string | null // 한국이 위치한 R32 경기 (없으면 탈락)
+  exact: boolean // Annexe C 공식 배정 여부 (현재는 항상 false=예시 구조)
 }
 
 /**
- * 진출한 8개 조 3위를 32강 슬롯에 배정한다 (pure function).
- *  - annexCCombos에 해당 조합이 있으면 공식 배정(exact=true)
- *  - 없으면 와일드카드 순위 순서대로 슬롯에 채우는 폴백(exact=false)
+ * 와일드카드 순위 상위 8팀을 R32 3위 슬롯에 배정하고 대진표를 만든다 (pure function).
+ * 배정은 와일드카드 순위 순(slotIndex 0=1위 …). 시뮬레이션으로 순위가 바뀌면 한국 위치도 바뀐다.
  */
 export function buildBracket(
   rankedThirds: ThirdRow[],
-  annexCCombos: Record<string, Group[]>,
-  thirdSlots: ThirdSlot[],
+  r32Seeds: SeedMatch[],
 ): Bracket {
-  const qualified = rankedThirds.filter((t) => t.aboveCutline) // 상위 8팀
-  const key = combinationKey(qualified.map((t) => t.groupCode))
-  const combo = annexCCombos[key]
+  const qualified = rankedThirds.filter((t) => t.aboveCutline) // 상위 8팀 (slotIndex 순)
 
-  if (combo && combo.length === thirdSlots.length) {
-    // 공식 배정: 슬롯 i ← combo[i] 조의 3위
-    const byGroup = new Map(qualified.map((t) => [t.groupCode, t]))
-    return {
-      exact: true,
-      slots: thirdSlots.map((slot, i) => {
-        const third = byGroup.get(combo[i]) ?? null
+  const resolveSeed = (seed: Seed): ResolvedSeed => {
+    if (seed.type === 'third') {
+      const third = qualified[seed.slotIndex]
+      if (!third) {
         return {
-          matchId: slot.matchId,
-          opponentLabel: slot.opponentLabel,
-          third,
-          isKorea: third?.teamId === KOREA_TEAM_ID,
+          kind: 'label', groupCode: 'A', label: '3위 미정',
+          isThird: true, isKorea: false, determined: false,
         }
-      }),
+      }
+      return {
+        kind: 'team',
+        groupCode: third.groupCode,
+        label: `${third.groupCode}조 3위`,
+        teamId: third.teamId,
+        isThird: true,
+        isKorea: third.teamId === KOREA_TEAM_ID,
+        determined: true,
+      }
+    }
+    const suffix = seed.type === 'winner' ? '1위' : '2위'
+    return {
+      kind: 'label',
+      groupCode: seed.group,
+      label: `${seed.group}조 ${suffix}`,
+      isThird: false,
+      isKorea: false,
+      determined: false,
     }
   }
 
-  // 폴백: 와일드카드 순위 순으로 슬롯에 채움 (근사)
+  const resolveMatch = (m: SeedMatch): ResolvedMatch => ({
+    id: m.id,
+    side: m.side,
+    top: resolveSeed(m.top),
+    bottom: resolveSeed(m.bottom),
+  })
+
+  const all = r32Seeds.map(resolveMatch)
+  const koreaMatch = all.find((m) => m.top.isKorea || m.bottom.isKorea)
+
   return {
+    left: all.filter((m) => m.side === 'L'),
+    right: all.filter((m) => m.side === 'R'),
+    koreaMatchId: koreaMatch?.id ?? null,
     exact: false,
-    slots: thirdSlots.map((slot, i) => {
-      const third = qualified[i] ?? null
-      return {
-        matchId: slot.matchId,
-        opponentLabel: slot.opponentLabel,
-        third,
-        isKorea: third?.teamId === KOREA_TEAM_ID,
-      }
-    }),
   }
 }

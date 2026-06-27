@@ -8,12 +8,14 @@ import { updateMatchScore } from './domain/standings'
 import { KoreaStatusCard } from './components/KoreaStatusCard'
 import { BestThirdTable } from './components/BestThirdTable'
 import { RemainingMatches } from './components/RemainingMatches'
-import { BracketPreview } from './components/BracketPreview'
+import { BracketTree } from './components/BracketTree'
+import { ScenarioModal } from './components/ScenarioModal'
 import { formatKST } from './lib/flag'
 
 export default function App() {
   // 기본값 = 코드의 공식 경기 결과. 시뮬레이터로 바꾸면 이 state만 갱신.
   const [matches, setMatches] = useState<Match[]>(officialMatches)
+  const [scenarioOpen, setScenarioOpen] = useState(false)
   const dirty = matches !== officialMatches
 
   const state = useMemo(
@@ -39,6 +41,14 @@ export default function App() {
         </p>
       </header>
 
+      <button
+        type="button"
+        onClick={() => setScenarioOpen(true)}
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow active:bg-slate-700"
+      >
+        📋 한국 진출 시나리오 보기 (어떻게 되면 올라가나?)
+      </button>
+
       <main className="space-y-4">
         <KoreaStatusCard status={state.koreaStatus} />
         <RemainingMatches
@@ -49,8 +59,10 @@ export default function App() {
           dirty={dirty}
         />
         <BestThirdTable rows={state.rankedThirds} teamsById={teamsById} />
-        <BracketPreview bracket={state.bracket} teamsById={teamsById} />
+        <BracketTree bracket={state.bracket} teamsById={teamsById} />
       </main>
+
+      <ScenarioModal open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
 
       <footer className="mt-8 text-center text-[11px] leading-relaxed text-slate-400">
         <p>
