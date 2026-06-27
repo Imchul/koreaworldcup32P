@@ -1,15 +1,39 @@
 import {
   GROUP_SCENARIOS,
-  GROUP_PROBS,
   QUALIFICATION_RULE,
   buildComboTable,
   computeQualifyProbability,
+  groupProbViews,
+  qualifyPathSummary,
+  type ResolvedGroups,
 } from '../domain/scenarios'
+import { matches as officialMatches } from '../data/matches'
+import { teamsById } from '../data/initialTeams'
 
-export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+// 끝난 결정적 경기의 스코어 문구 (예: "크로아티아 2-1 가나"). 미종료면 null.
+function decisiveResult(group: 'L' | 'K' | 'J'): string | null {
+  const m = officialMatches.find((x) => x.groupCode === group && x.decisive)
+  if (!m || m.status !== 'finished' || m.homeScore == null || m.awayScore == null) return null
+  const h = teamsById[m.homeTeamId]?.nameKo ?? m.homeTeamId
+  const a = teamsById[m.awayTeamId]?.nameKo ?? m.awayTeamId
+  return `${h} ${m.homeScore}-${m.awayScore} ${a}`
+}
+
+export function ScenarioModal({
+  open,
+  onClose,
+  resolved = {},
+}: {
+  open: boolean
+  onClose: () => void
+  resolved?: ResolvedGroups
+}) {
   if (!open) return null
-  const combos = buildComboTable()
-  const odds = computeQualifyProbability()
+  const combos = buildComboTable(resolved)
+  const odds = computeQualifyProbability(resolved)
+  const probViews = groupProbViews(resolved)
+  const pathSummary = qualifyPathSummary(resolved)
+  const settledCount = (['L', 'K', 'J'] as const).filter((g) => resolved[g]).length
 
   return (
     <div
@@ -38,6 +62,12 @@ export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () =>
           <b className="text-korea">진출 규칙</b> · {QUALIFICATION_RULE}
         </div>
 
+        {settledCount > 0 && (
+          <div className="mt-3 rounded-xl border-l-4 border-korea bg-slate-50 p-3 text-sm font-medium text-slate-800">
+            📌 현재 상황 · {pathSummary}
+          </div>
+        )}
+
         {/* 진출 확률 요약 */}
         <div className="mt-3 rounded-xl border border-slate-100 p-3">
           <div className="flex items-end justify-between">
@@ -55,46 +85,107 @@ export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () =>
             <span className="text-rose-500">탈락(9위↓) {odds.pOut}%</span>
           </div>
           <div className="mt-2 grid grid-cols-3 gap-1.5 text-[11px]">
-            {GROUP_PROBS.map((g) => (
-              <div key={g.group} className="rounded-lg bg-slate-50 px-2 py-1.5 text-center">
-                <div className="font-bold text-slate-700">{g.group}조</div>
-                <div className="text-emerald-600">유리 {g.goodPct}%</div>
-                <div className="text-rose-500">불리 {g.badPct}%</div>
+            {probViews.map((g) => (
+              <div
+                key={g.group}
+                className={`rounded-lg px-2 py-1.5 text-center ${
+                  g.settled
+                    ? g.settledState === 'bad'
+                      ? 'bg-rose-50 ring-1 ring-rose-200'
+                      : 'bg-emerald-50 ring-1 ring-emerald-200'
+                    : 'bg-slate-50'
+                }`}
+              >
+                <div className="font-bold text-slate-700">
+                  {g.group}조{g.settled && ' ✓'}
+                </div>
+                {g.settled ? (
+                  <div
+                    className={`font-bold ${
+                      g.settledState === 'bad' ? 'text-rose-600' : 'text-emerald-600'
+                    }`}
+                  >
+                    {g.settledState === 'bad' ? '불리 확정' : '유리 확정'}
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-emerald-600">유리 {g.goodPct}%</div>
+                    <div className="text-rose-500">불리 {g.badPct}%</div>
+                  </>
+                )}
               </div>
             ))}
           </div>
           <p className="mt-1.5 text-[10px] text-slate-400">
-            참고 이미지 승률 + 분석 매핑 기반 근사치. 정확한 확률은 스코어 분포에 따라 달라집니다.
+            확정된 조는 결과로 고정하고, 남은 조의 승률(참고 이미지)만 변수로 둔 조건부 근사치입니다.
           </p>
         </div>
 
         <h3 className="mt-4 mb-2 text-sm font-bold text-slate-800">조별 핵심 변수</h3>
         <div className="space-y-2">
-          {GROUP_SCENARIOS.map((g) => (
-            <div key={g.group} className="rounded-xl border border-slate-100 p-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800">
-                  {g.group}조 · {g.match}
-                </span>
-                <span className="text-[11px] text-slate-400">{g.kickoffKo}</span>
+          {GROUP_SCENARIOS.map((g) => {
+            const state = resolved[g.group]
+            const result = decisiveResult(g.group)
+            return (
+              <div
+                key={g.group}
+                className={`rounded-xl border p-3 text-sm ${
+                  state === 'bad'
+                    ? 'border-rose-200 bg-rose-50/40'
+                    : state === 'good'
+                      ? 'border-emerald-200 bg-emerald-50/40'
+                      : 'border-slate-100'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800">
+                    {g.group}조 · {g.match}
+                  </span>
+                  <span className="text-[11px] text-slate-400">{g.kickoffKo}</span>
+                </div>
+
+                {state && (
+                  <div
+                    className={`mt-2 rounded-lg px-2 py-1 text-xs font-bold ${
+                      state === 'bad'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-emerald-100 text-emerald-700'
+                    }`}
+                  >
+                    {state === 'bad' ? '✗ 결과 확정 — 한국에 불리' : '✓ 결과 확정 — 한국에 유리'}
+                    {result && <span className="ml-1 font-medium opacity-80">({result})</span>}
+                  </div>
+                )}
+
+                <div className="mt-2 flex items-start gap-2">
+                  <span className="mt-0.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                    좋음
+                  </span>
+                  <span className={state === 'bad' ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                    {g.good}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-start gap-2">
+                  <span className="mt-0.5 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                    나쁨
+                  </span>
+                  <span className={state === 'good' ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                    {g.bad}
+                  </span>
+                </div>
               </div>
-              <div className="mt-2 flex items-start gap-2">
-                <span className="mt-0.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                  좋음
-                </span>
-                <span className="text-slate-700">{g.good}</span>
-              </div>
-              <div className="mt-1 flex items-start gap-2">
-                <span className="mt-0.5 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
-                  나쁨
-                </span>
-                <span className="text-slate-700">{g.bad}</span>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        <h3 className="mt-4 mb-2 text-sm font-bold text-slate-800">8가지 조합별 결과</h3>
+        <h3 className="mt-4 mb-2 text-sm font-bold text-slate-800">
+          {combos.length}가지 조합별 결과
+          {settledCount > 0 && (
+            <span className="ml-1 text-[11px] font-normal text-slate-400">
+              (확정 조 고정 · 남은 {3 - settledCount}조만 변수)
+            </span>
+          )}
+        </h3>
         <div className="overflow-x-auto rounded-lg border border-slate-100">
           <table className="w-full text-xs">
             <thead>
@@ -135,6 +226,7 @@ export function ScenarioModal({ open, onClose }: { open: boolean; onClose: () =>
         <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
           "좋음" = 그 조에서 한국보다 좋은 3위가 나오지 않음. 위험 3조 중 2조 이상에서 한국보다 좋은
           3위가 나오면 한국은 9위로 밀려 탈락합니다.
+          {settledCount > 0 && ' 확정된 조는 결과로 고정되어 표에 항상 같은 값으로 표시됩니다.'}
         </p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { fixedThirds } from './data/fixedThirds'
 import { scenarioPresets } from './data/scenarioPresets'
 import { computeWorldCupState } from './domain/compute'
 import { updateMatchScore } from './domain/standings'
+import { resolvedFromWatch } from './domain/scenarios'
 import { KoreaStatusCard } from './components/KoreaStatusCard'
 import { BestThirdTable } from './components/BestThirdTable'
 import { RemainingMatches } from './components/RemainingMatches'
@@ -31,6 +32,15 @@ export default function App() {
   const state = useMemo(
     () => computeWorldCupState(matches, teams, fixedThirds),
     [matches],
+  )
+
+  // 리포트(확률표)는 시뮬레이션이 아닌 "공식 확정 결과" 기준으로 남은 경우의 수를 보여준다.
+  const officialResolved = useMemo(
+    () =>
+      resolvedFromWatch(
+        computeWorldCupState(officialMatches, teams, fixedThirds).koreaStatus.watchGroups,
+      ),
+    [],
   )
 
   // 시나리오 버튼별 한국 결과 미리 계산 (현재 시뮬레이션과 무관, 1회 계산)
@@ -108,7 +118,11 @@ export default function App() {
         <BracketTree bracket={state.bracket} teamsById={teamsById} />
       </main>
 
-      <ScenarioModal open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
+      <ScenarioModal
+        open={scenarioOpen}
+        onClose={() => setScenarioOpen(false)}
+        resolved={officialResolved}
+      />
 
       <footer className="mt-8 text-center text-[11px] leading-relaxed text-slate-400">
         <p>

@@ -22,10 +22,11 @@ describe('computeGroupStandings', () => {
     expect(k[3]).toMatchObject({ id: 'UZB', pts: 0, gd: -7 })
   })
 
-  it('L조 현재 순위: 3위는 크로아티아 3·GD-1', () => {
+  it('L조 최종 순위: ENG 7 / CRO 6 / GHA 4(3위) / PAN 0', () => {
     const l = st.L
-    expect(l[0].points).toBe(4) // ENG or GHA
-    expect(l[2]).toMatchObject({ teamId: 'CRO', points: 3, goalDifference: -1 })
+    expect(l[0]).toMatchObject({ teamId: 'ENG', points: 7 })
+    expect(l[1]).toMatchObject({ teamId: 'CRO', points: 6 })
+    expect(l[2]).toMatchObject({ teamId: 'GHA', points: 4, goalDifference: 1 })
     expect(l[3].teamId).toBe('PAN')
   })
 
@@ -37,15 +38,15 @@ describe('computeGroupStandings', () => {
 
 describe('updateMatchScore', () => {
   it('두 점수가 채워지면 finished, 불변 갱신', () => {
-    const next = updateMatchScore(matches, 'L-CRO-GHA', 0, 1)
-    const m = next.find((x) => x.id === 'L-CRO-GHA')!
+    const next = updateMatchScore(matches, 'K-COD-UZB', 0, 1)
+    const m = next.find((x) => x.id === 'K-COD-UZB')!
     expect(m).toMatchObject({ homeScore: 0, awayScore: 1, status: 'finished' })
-    // 원본 불변
-    expect(matches.find((x) => x.id === 'L-CRO-GHA')!.status).toBe('scheduled')
+    // 원본 불변 (K-COD-UZB는 공식값에서 아직 미정)
+    expect(matches.find((x) => x.id === 'K-COD-UZB')!.status).toBe('scheduled')
   })
 
   it('한쪽이 null이면 scheduled', () => {
-    const next = updateMatchScore(matches, 'L-CRO-GHA', 1, null)
-    expect(next.find((x) => x.id === 'L-CRO-GHA')!.status).toBe('scheduled')
+    const next = updateMatchScore(matches, 'K-COD-UZB', 1, null)
+    expect(next.find((x) => x.id === 'K-COD-UZB')!.status).toBe('scheduled')
   })
 })
