@@ -37,12 +37,13 @@ describe('buildComboTable (진출 시나리오)', () => {
 })
 
 describe('buildComboTable — 확정 조 반영(resolved)', () => {
-  it('현재 공식값에서 L조는 bad로 확정된다', () => {
+  it('현재 공식값: L·K 모두 bad 확정, J만 미정 → 진출 확률 0%', () => {
     const { koreaStatus } = computeWorldCupState(matches, teams, fixedThirds)
     const resolved = resolvedFromWatch(koreaStatus.watchGroups)
     expect(resolved.L).toBe('bad')
-    expect(resolved.K).toBeUndefined() // 미정
-    expect(resolved.J).toBeUndefined()
+    expect(resolved.K).toBe('bad')
+    expect(resolved.J).toBeUndefined() // 미정이지만 결과와 무관
+    expect(computeQualifyProbability(resolved).qualify).toBe(0)
   })
 
   it('L조 bad 고정 시 남은 K·J만 변수 → 4조합, 모두 L=bad', () => {
@@ -104,17 +105,17 @@ describe('scenarioPresets — 버튼별 한국 결과', () => {
 })
 
 describe('confirmed 플래그 (와일드카드 표 확정/미확정)', () => {
-  it('현재 K/J 2팀만 미확정 (L조 종료)', () => {
+  it('현재 J 1팀만 미확정 (L·K조 종료)', () => {
     const { rankedThirds } = computeWorldCupState(matches, teams, fixedThirds)
-    expect(rankedThirds.filter((r) => !r.confirmed)).toHaveLength(2)
-    expect(rankedThirds.filter((r) => r.confirmed)).toHaveLength(10)
+    expect(rankedThirds.filter((r) => !r.confirmed)).toHaveLength(1)
+    expect(rankedThirds.filter((r) => r.confirmed)).toHaveLength(11)
   })
 
   it('결정적 경기 입력 시 해당 조 3위가 확정됨', () => {
-    const ms = updateMatchScore(matches, 'L-CRO-GHA', 0, 1) // 가나 승
+    const ms = updateMatchScore(matches, 'J-ALG-AUT', 0, 1) // 오스트리아 승
     const { rankedThirds } = computeWorldCupState(ms, teams, fixedThirds)
-    const lThird = rankedThirds.find((r) => r.groupCode === 'L')!
-    expect(lThird.confirmed).toBe(true)
-    expect(rankedThirds.filter((r) => !r.confirmed)).toHaveLength(2) // K, J만 미확정
+    const jThird = rankedThirds.find((r) => r.groupCode === 'J')!
+    expect(jThird.confirmed).toBe(true)
+    expect(rankedThirds.filter((r) => !r.confirmed)).toHaveLength(0) // 전 조 종료
   })
 })
