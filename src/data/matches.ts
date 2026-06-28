@@ -11,10 +11,10 @@ import type { Match } from '../types/worldcup'
 //    (시뮬레이터 변경은 새로고침하면 이 공식값으로 복귀)
 //
 //  이미 끝난 경기의 스코어는 각 조 현재 순위(분석 기준)를 정확히 재현하도록 구성:
-//    J: ARG 6 / AUT 3·GD0 / ALG 3·GD-2 / JOR 0   (결정적 J-ALG-AUT 대기)
-//    K: COL 6 / POR 4 / COD 1·GD-1 / UZB 0·GD-7   (결정적 K-COD-UZB 대기)
+//    J: ARG 6 / AUT 3·GD0 / ALG 3·GD-2 / JOR 0   (결정적 J-ALG-AUT 대기 · 한국 탈락엔 영향 없음)
+//    K: COL 7 / POR 5 / COD 4·GD+1(3위) / UZB 0   ← 조 종료. 3위 DR콩고=한국에 불리(확정)
 //    L: ENG 7 / CRO 6 / GHA 4·GD+1(3위) / PAN 0   ← 조 종료. 3위 가나=한국에 불리(확정)
-//    (한국 = A조 3위, 3점·GD-1·득점2)
+//    (한국 = A조 3위, 3점·GD-1·득점2) → 위험 2조(L·K) 확정 → 한국 9위, 탈락 확정
 // ============================================================================
 
 export const matches: Match[] = [
@@ -54,16 +54,16 @@ export const matches: Match[] = [
     prob: { home: 2, draw: 7, away: 91 },
   },
 
-  // ── K조 (08:30) ──
+  // ── K조 (08:30) · 종료 ── DR콩고 3-1 우즈벡 → K조 3위=DR콩고(4점)로 한국보다 위 → 한국에 불리(확정)
   {
     id: 'K-COD-UZB', groupCode: 'K', homeTeamId: 'COD', awayTeamId: 'UZB',
-    homeScore: null, awayScore: null, status: 'scheduled',
+    homeScore: 3, awayScore: 1, status: 'finished',
     kickoffAt: '2026-06-28T08:30:00+09:00', decisive: true,
     prob: { home: 46, draw: 25, away: 29 },
   },
   {
     id: 'K-COL-POR', groupCode: 'K', homeTeamId: 'COL', awayTeamId: 'POR',
-    homeScore: null, awayScore: null, status: 'scheduled',
+    homeScore: 0, awayScore: 0, status: 'finished',
     kickoffAt: '2026-06-28T08:30:00+09:00', decisive: false,
     prob: { home: 29, draw: 25, away: 46 },
   },
@@ -84,4 +84,4 @@ export const matches: Match[] = [
 ]
 
 // 마지막 공식 갱신 시각 (결과 입력 시 함께 수정)
-export const lastUpdated = '2026-06-28T06:50:00+09:00'
+export const lastUpdated = '2026-06-28T09:20:00+09:00'

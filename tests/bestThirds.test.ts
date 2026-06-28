@@ -44,9 +44,9 @@ describe('rankBestThirds', () => {
     }
   })
 
-  it('초기 상태에서 한국은 8위 이내(진출권)', () => {
+  it('현재 공식값(L·K 종료)에서 한국은 9위로 컷라인 밖(탈락)', () => {
     const korea = rankNow().find((r) => r.teamId === 'KOR')!
-    expect(korea.aboveCutline).toBe(true)
-    expect(korea.rank).toBeLessThanOrEqual(8)
+    expect(korea.aboveCutline).toBe(false)
+    expect(korea.rank).toBe(9)
   })
 })

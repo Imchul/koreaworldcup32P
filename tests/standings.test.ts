@@ -14,12 +14,12 @@ describe('computeGroupStandings', () => {
     expect(j[3]).toMatchObject({ id: 'JOR', pts: 0 })
   })
 
-  it('K조 현재 순위: COL 6 / POR 4 / COD 1·GD-1 / UZB 0·GD-7', () => {
+  it('K조 최종 순위: COL 7 / POR 5 / COD 4(3위) / UZB 0', () => {
     const k = st.K.map((r) => ({ id: r.teamId, pts: r.points, gd: r.goalDifference }))
-    expect(k[0]).toMatchObject({ id: 'COL', pts: 6 })
-    expect(k[1]).toMatchObject({ id: 'POR', pts: 4 })
-    expect(k[2]).toMatchObject({ id: 'COD', pts: 1, gd: -1 })
-    expect(k[3]).toMatchObject({ id: 'UZB', pts: 0, gd: -7 })
+    expect(k[0]).toMatchObject({ id: 'COL', pts: 7 })
+    expect(k[1]).toMatchObject({ id: 'POR', pts: 5 })
+    expect(k[2]).toMatchObject({ id: 'COD', pts: 4, gd: 1 })
+    expect(k[3]).toMatchObject({ id: 'UZB', pts: 0 })
   })
 
   it('L조 최종 순위: ENG 7 / CRO 6 / GHA 4(3위) / PAN 0', () => {
@@ -38,15 +38,15 @@ describe('computeGroupStandings', () => {
 
 describe('updateMatchScore', () => {
   it('두 점수가 채워지면 finished, 불변 갱신', () => {
-    const next = updateMatchScore(matches, 'K-COD-UZB', 0, 1)
-    const m = next.find((x) => x.id === 'K-COD-UZB')!
+    const next = updateMatchScore(matches, 'J-ALG-AUT', 0, 1)
+    const m = next.find((x) => x.id === 'J-ALG-AUT')!
     expect(m).toMatchObject({ homeScore: 0, awayScore: 1, status: 'finished' })
-    // 원본 불변 (K-COD-UZB는 공식값에서 아직 미정)
-    expect(matches.find((x) => x.id === 'K-COD-UZB')!.status).toBe('scheduled')
+    // 원본 불변 (J-ALG-AUT는 공식값에서 아직 미정)
+    expect(matches.find((x) => x.id === 'J-ALG-AUT')!.status).toBe('scheduled')
   })
 
   it('한쪽이 null이면 scheduled', () => {
-    const next = updateMatchScore(matches, 'K-COD-UZB', 1, null)
-    expect(next.find((x) => x.id === 'K-COD-UZB')!.status).toBe('scheduled')
+    const next = updateMatchScore(matches, 'J-ALG-AUT', 1, null)
+    expect(next.find((x) => x.id === 'J-ALG-AUT')!.status).toBe('scheduled')
   })
 })

@@ -8,6 +8,7 @@ import { computeWorldCupState } from './domain/compute'
 import { updateMatchScore } from './domain/standings'
 import { resolvedFromWatch } from './domain/scenarios'
 import { KoreaStatusCard } from './components/KoreaStatusCard'
+import { EliminationReport } from './components/EliminationReport'
 import { BestThirdTable } from './components/BestThirdTable'
 import { RemainingMatches } from './components/RemainingMatches'
 import { BracketTree } from './components/BracketTree'
@@ -101,6 +102,7 @@ export default function App() {
 
       <main className="space-y-4">
         <KoreaStatusCard status={state.koreaStatus} />
+        <EliminationReport status={state.koreaStatus} />
         <ScenarioPresets
           results={presetResults}
           activeId={activePreset}
